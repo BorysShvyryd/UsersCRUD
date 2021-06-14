@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <Resource name="jdbc/usersDao"
+              auth="Container"
+              type="javax.sql.DataSource"
+              username="root"
+              password="Borys19041986"
+              driverClassName="com.mysql.jdbc.Driver"
+              connectionProperties="useUnicode=yes;characterEncoding=utf8;"
+              url="jdbc:mysql://localhost:3306/workshop2"
+              maxTotal="100"
+              maxIdle="30"
+              maxWaitMillis="10000" />
+<!--    jdbc / users - ім'я ресурсу, який ми будемо використовувати.-->
+<!--    username - вхід в базу даних-->
+<!--    пароль - пароль бази даних-->
+<!--    url - URL-адреса бази даних-->
+</Context>
