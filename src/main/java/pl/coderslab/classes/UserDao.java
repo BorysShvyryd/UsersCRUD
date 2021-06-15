@@ -1,12 +1,10 @@
 package pl.coderslab.classes;
 
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.mindrot.jbcrypt.BCrypt;
-import pl.coderslab.classes.DbUtil;
-import pl.coderslab.classes.User;
+import pl.coderslab.utils.DbUtil;
 
 import java.sql.*;
-import java.util.Objects;
 import java.util.Scanner;
 
 public class UserDao {
@@ -14,10 +12,10 @@ public class UserDao {
     public static final String RESET = "\033[0m";
     public static final String PURPLE = "\033[0;35m";
 
-    private static final String CREATE_USER_QUERY =" ";
-//            """
-//                    INSERT INTO users(username, email, password)
-//                    VALUES (?, ?, ?)""";
+    private static final String CREATE_USER_QUERY =
+            """
+                    INSERT INTO users(username, email, password)
+                    VALUES (?, ?, ?)""";
 
     public static final String USER_SEARCH_BY_ID_QUERY =
             """
@@ -53,7 +51,7 @@ public class UserDao {
             statement.setString(1, user.getUserName());
             statement.setString(2, user.getEmail());
 
-            String myHashPass = DbUtil.hashPassword(user.getPassword());
+            String myHashPass = hashPassword(user.getPassword());
             if (BCrypt.checkpw(user.getPassword(), myHashPass)) {
                 statement.setString(3, myHashPass);
                 statement.executeUpdate();
@@ -69,111 +67,139 @@ public class UserDao {
 //            throw new DaoException("Error creating database", ex);
         }
     }
+    public static User[] getAllUsers(Connection conn, String query, Scanner scan, String arg) {
 
-    /**
-     * @param scann Object Scanner
-     * @return Object user
-     */
-    public static User createUserInClass(Scanner scann) {
-        System.out.println("Creating a user...");
-        return new User(strEnteredFromTheConsole(scann, "Please enter username"),
-                strEnteredFromTheConsole(scann, "Please enter the user email"),
-                strEnteredFromTheConsole(scann, "Please enter the user password"));
-    }
+//        if ("withName".equals(arg)) {
+//            String findString = "%" + UserDao.strEnteredFromTheConsole(scan, "Enter a search name: ") + "%";
+//            System.out.println(UserDao.PURPLE + "Search for all users where name \"..." + findString + "...\"" + UserDao.RESET);
+//            query = String.format(query, findString);
+//        }
 
-    /**
-     * The method receives text data from the console
-     *
-     * @param scanner         Object Scanner
-     * @param questionToEnter Text hint for data entry
-     * @return Data string entered
-     */
-    public static String strEnteredFromTheConsole(Scanner scanner, String questionToEnter) {
-        String str;
-        while (true) {
-            System.out.print(questionToEnter + ": ");
-            str = scanner.nextLine();
-            if ("".equals(str)) {
-                System.out.println(RED + "Data cannot be empty" + RESET);
-                continue;
+        try (PreparedStatement statement = conn.prepareStatement(query)) {
+            System.out.println(UserDao.PURPLE + "Search for all users..." + UserDao.RESET);
+
+            User[] users = new User[0];
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                User user = new User(resultSet.getInt("id"),
+                        resultSet.getString("username"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password"));
+                users = ArrayUtils.add(users, user);
             }
-            break;
+            return users;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
-        return str;
+        return null;
     }
 
-    public static int intEnteredFromTheConsole(Scanner scan, String questionToEnter) {
-        String n;
+    public static String hashPassword(String password) {
+        return BCrypt.hashpw(password, BCrypt.gensalt());
+    }
 
-        while (true) {
-            n = strEnteredFromTheConsole(scan, questionToEnter);
-            if (!isNumberGreaterEqualZero(n)) {
-                System.out.println(RED + "Incorrect argument" + RESET);
-                continue;
+    public static User getUser(Connection conn, String query, int userID) {
+        try (PreparedStatement statement = conn.prepareStatement(query)) {
+            System.out.println(UserDao.PURPLE + "Search for a user by ID..." + UserDao.RESET);
+
+            statement.setInt(1, userID);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return new User(resultSet.getInt("id"),
+                        resultSet.getString("username"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password"));
             }
-            break;
-        }
-        return Integer.parseInt(n);
-    }
-
-    public static boolean isNumberGreaterEqualZero(String input) {
-        if (NumberUtils.isParsable(input)) {
-            return Integer.parseInt(input) >= 0;
-        }
-        return false;
-    }
-
-    public static void workWithTheDatabase(Connection conn, Scanner scann) {
-
-        int index;
-        while (true) {
-            index = intEnteredFromTheConsole(scann, """
-                    Please enter the transaction number:
-                       1 - create user
-                       2 - search user by ID
-                       3 - update user by ID
-                       4 - delete user by ID
-                       5 - display a list of all users
-                       6 - search for a user by name
-                       0 - exit
-                    enter the number """);
-
-            switch (index) {
-                case 0 -> System.exit(0);
-                case 1 -> createUserInDb(conn, createUserInClass(scann));
-                case 2 -> DbUtil.getUser(conn,
-                        USER_SEARCH_BY_ID_QUERY,
-                        Integer.parseInt(strEnteredFromTheConsole(scann, "Please enter User ID"))).toString();
-                case 3 -> DbUtil.runUpdateQueryByID(conn,
-                        UPDATE_USER_QUERY,
-                        Integer.parseInt(strEnteredFromTheConsole(scann, "Please enter User ID")),
-                        "update",
-                        scann);
-                case 4 -> DbUtil.runUpdateQueryByID(conn,
-                        DELETE_USER_BY_ID_QUERY,
-                        Integer.parseInt(strEnteredFromTheConsole(scann, "Please enter User ID")),
-                        "delete",
-                        scann);
-                case 5 -> DbUtil.printAllUsers(Objects.requireNonNull(DbUtil.getAllUsers(conn, SELECT_ALL_USER_QUERY, scann, "all")));
-                case 6 -> DbUtil.printAllUsers(Objects.requireNonNull(DbUtil.getAllUsers(conn, SELECT_ALL_USER_WITH_NAME_QUERY, scann, "withName")));
-                default -> System.out.println(RED + "Please enter correct number" + RESET);
-            }
-        }
-    }
-
-    public static void main(String[] args) {
-        try (Connection conn = DbUtil.getConnection()) {
-            Scanner scann = new Scanner(System.in);
-
-            if (!DbUtil.createDB(conn, scann)) {
-                System.out.println("Failed to create database");
-                System.exit(0);
-            }
-
-            workWithTheDatabase(conn, scann);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-            System.out.println("Failed connection to SQL");
+//            throw new DaoException("throw new ");
         }
+        return null;
     }
+
+    public static User[] getAllUsers() {//
+        // Connection conn, String query, Scanner scan, String arg) {
+
+//        if ("withName".equals(arg)) {
+////            String findString = "%" + UserDao.strEnteredFromTheConsole(scan, "Enter a search name: ") + "%";
+//            String findString = "%" + "Enter a search name: " + "%";
+//            System.out.println(UserDao.PURPLE + "Search for all users where name \"..." + findString + "...\"" + UserDao.RESET);
+//            query = String.format(query, findString);
+//        }
+
+        try (PreparedStatement statement = DbUtil.getConnection().prepareStatement(SELECT_ALL_USER_QUERY)) {
+            System.out.println(UserDao.PURPLE + "Search for all users..." + UserDao.RESET);
+
+            User[] users = new User[0];
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                User user = new User(resultSet.getInt("id"),
+                        resultSet.getString("username"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password"));
+                users = ArrayUtils.add(users, user);
+            }
+            return users;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
+
+//    public static void printUser(User user) {
+//        if (user != null) {
+//            System.out.format("%6s | %20s | %25s | %20s",
+//                    user.getId(),
+//                    user.getUserName(),
+//                    user.getEmail(),
+//                    user.getPassword());
+//            System.out.println();
+//        } else
+//            System.out.println(UserDao.RED + "No user with id number found" + UserDao.RESET);
+//    }
+
+    public static void printAllUsers(User[] users) {
+        if (users.length > 0)
+            for (User u : users) {
+                u.toString();
+            }
+        else System.out.println(UserDao.RED + "No users" + UserDao.RESET);
+    }
+
+//    public static void runUpdateQueryByID(Connection conn, String query, int id, String operation, Scanner scan) {
+//        try (PreparedStatement statement =
+//                     conn.prepareStatement(query)) {
+//            User user;
+//            if ("update".equalsIgnoreCase(operation)) {
+//                System.out.println(UserDao.PURPLE + "Update..." + UserDao.RESET);
+//                System.out.println("Enter data to change: (blank line - refuse to edit the field)");
+//
+//                user = getUser(conn, UserDao.USER_SEARCH_BY_ID_QUERY, id);
+//
+//                assert user != null;
+//                String st = UserDao.strEnteredFromTheConsole(scan, "Replace the name: " + user.getUserName() + " with : ");
+//                if (!"".equals(st)) user.setUserName(st);
+//                st = UserDao.strEnteredFromTheConsole(scan, "Replace the email: " + user.getEmail() + " with : ");
+//                if (!"".equals(st)) user.setEmail(st);
+//                st = UserDao.strEnteredFromTheConsole(scan, "Replace the password with : ");
+//                if (!"".equals(st)) user.setPassword(st);
+//
+//                statement.setString(1, user.getUserName());
+//                statement.setString(2, user.getEmail());
+//                statement.setString(3, pl.coderslab.utils.DbUtil.hashPassword(user.getPassword()));
+//                statement.setInt(4, id);
+//                System.out.println(UserDao.PURPLE + "Update complete." + UserDao.RESET);
+//            } else {
+//                System.out.println(UserDao.PURPLE + "Delete..." + UserDao.RESET);
+//                statement.setInt(1, id);
+//            }
+//            if (statement.executeUpdate() == 0)
+//                System.out.println(UserDao.RED + "No user with id number found" + UserDao.RESET);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
 }
