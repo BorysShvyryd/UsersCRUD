@@ -1,8 +1,8 @@
 <%--
   Created by IntelliJ IDEA.
   User: USER
-  Date: 15.06.2021
-  Time: 10:49
+  Date: 16.06.2021
+  Time: 0:55
   To change this template use File | Settings | File Templates.
 --%>
 <%@ include file="/header.jsp" %>
@@ -18,24 +18,25 @@
     </div>
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Dodaj użytkownika</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Edycja użytkownika</h6>
         </div>
         <div class="card-body">
             <form method="post">
+                <input type="hidden" name="id" value="${user.id}"/>
                 <div class="form-group">
                     <label for="userName">Nazwa</label>
-                    <input name="userName" type="text" class="form-control" id="userName" placeholder="Nazwa użytkownika">
+                    <input value="${user.userName}" name="userName" type="text" class="form-control" id="userName" placeholder="Nazwa użytkownika">
                 </div>
                 <div class="form-group">
                     <label for="userEmail">Email</label>
-                    <input name="userEmail" type="email" class="form-control" id="userEmail" placeholder="Email użytkownika">
+                    <input value="${user.email}" name="userEmail" type="email" class="form-control" id="userEmail" placeholder="Email użytkownika">
                 </div>
                 <div class="form-group">
                     <label for="userPassword">Hasło</label>
                     <input name="userPassword" type="password" class="form-control" id="userPassword" placeholder="Hasło użytkownika">
                 </div>
 
-                <button type="submit" class="btn btn-primary">Zapisz</button>
+                <button type="submit" class="btn btn-primary">Edytuj</button>
             </form>
 
         </div>

@@ -12,6 +12,21 @@ public class UserDao {
     public static final String RESET = "\033[0m";
     public static final String PURPLE = "\033[0;35m";
 
+    private static final String CREATE_DB = """
+            CREATE DATABASE users
+                CHARACTER SET utf8mb4
+                COLLATE utf8mb4_unicode_ci""";
+    private static final String CREATE_TABLE_USERS = """
+            CREATE TABLE user
+            (   `id`       int(11)      NOT NULL AUTO_INCREMENT,
+                `email`    varchar(255) NOT NULL UNIQUE COLLATE utf8mb4_unicode_ci,
+                `username` varchar(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+                `password` varchar(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+                PRIMARY KEY (id)
+            ) ENGINE = InnoDB
+              DEFAULT CHARSET = utf8mb4
+              COLLATE = utf8mb4_unicode_ci""";
+
     private static final String CREATE_USER_QUERY =
             """
                     INSERT INTO users(username, email, password)
@@ -35,7 +50,7 @@ public class UserDao {
     private static final String SELECT_ALL_USER_QUERY =
             """
                     SELECT *
-                    FROM users""";
+                    FROM user""";
     private static final String SELECT_ALL_USER_WITH_NAME_QUERY =
             """
                     SELECT *
@@ -43,29 +58,29 @@ public class UserDao {
                     WHERE username LIKE '%s'""";
 
     /**
-     * @param conn Connection to database
      * @param user Object user
      */
-    public static void createUserInDb(Connection conn, User user) {
-        try (PreparedStatement statement = conn.prepareStatement(CREATE_USER_QUERY, Statement.RETURN_GENERATED_KEYS)) {
-            statement.setString(1, user.getUserName());
-            statement.setString(2, user.getEmail());
+    public static void createUserInDb(User user) {
+//        try (PreparedStatement statement = conn.prepareStatement(CREATE_USER_QUERY, Statement.RETURN_GENERATED_KEYS)) {
+//            statement.setString(1, user.getUserName());
+//            statement.setString(2, user.getEmail());
 
             String myHashPass = hashPassword(user.getPassword());
             if (BCrypt.checkpw(user.getPassword(), myHashPass)) {
-                statement.setString(3, myHashPass);
-                statement.executeUpdate();
-                ResultSet resultSet = statement.getGeneratedKeys();
-                if (resultSet.next()) {
-                    user.setId(resultSet.getInt(1));
-                }
+//                statement.setString(3, myHashPass);
+//                statement.executeUpdate();
+//                ResultSet resultSet = statement.getGeneratedKeys();
+//                if (resultSet.next()) {
+//                    user.setId(resultSet.getInt(1));
+//                }
+                System.out.println(RED + "UserDao: line 62, ...." + RESET);
             } else
-                System.out.println(RED + "Failed to hash password" + RESET);
+                System.out.println(RED + "Failed to hash password. UserDao: line 64" + RESET);
 
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-//            throw new DaoException("Error creating database", ex);
-        }
+//        } catch (SQLException ex) {
+//            ex.printStackTrace();
+////            throw new DaoException("Error creating database", ex);
+//        }
     }
     public static User[] getAllUsers(Connection conn, String query, Scanner scan, String arg) {
 
@@ -82,8 +97,7 @@ public class UserDao {
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
-                User user = new User(resultSet.getInt("id"),
-                        resultSet.getString("username"),
+                User user = new User(resultSet.getString("username"),
                         resultSet.getString("email"),
                         resultSet.getString("password"));
                 users = ArrayUtils.add(users, user);
@@ -99,23 +113,26 @@ public class UserDao {
         return BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
-    public static User getUser(Connection conn, String query, int userID) {
-        try (PreparedStatement statement = conn.prepareStatement(query)) {
-            System.out.println(UserDao.PURPLE + "Search for a user by ID..." + UserDao.RESET);
+    public static User getUser(int userID) {
+//        try (PreparedStatement statement = conn.prepareStatement(query)) {
+            System.out.println(UserDao.PURPLE + "Search for a user by ID... UserDao.getUser" + UserDao.RESET);
 
-            statement.setInt(1, userID);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                return new User(resultSet.getInt("id"),
-                        resultSet.getString("username"),
-                        resultSet.getString("email"),
-                        resultSet.getString("password"));
-            }
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-//            throw new DaoException("throw new ");
-        }
+//            statement.setInt(1, userID);
+//            ResultSet resultSet = statement.executeQuery();
+//            if (resultSet.next()) {
+//                return new User(resultSet.getString("username"),
+//                        resultSet.getString("email"),
+//                        resultSet.getString("password"));
+//            }
+//        } catch (SQLException throwables) {
+//            throwables.printStackTrace();
+////            throw new DaoException("throw new ");
+//        }
         return null;
+    }
+
+    public static void deleteUserById(int id) {
+
     }
 
     public static User[] getAllUsers() {//
@@ -135,8 +152,7 @@ public class UserDao {
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
-                User user = new User(resultSet.getInt("id"),
-                        resultSet.getString("username"),
+                User user = new User(resultSet.getString("username"),
                         resultSet.getString("email"),
                         resultSet.getString("password"));
                 users = ArrayUtils.add(users, user);

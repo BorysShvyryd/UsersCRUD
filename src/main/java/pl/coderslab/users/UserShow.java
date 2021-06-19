@@ -1,16 +1,17 @@
 package pl.coderslab.users;
 
+import pl.coderslab.classes.UserDao;
+
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.io.IOException;
 
-@WebServlet("/user/list")
-public class UserList extends HttpServlet {
+@WebServlet("/user/show")
+public class UserShow extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//        request.setAttribute("users", UserDao.getAllUsers());
-        response.getWriter().append("uhdgcaufcefv");
+        request.setAttribute("users", UserDao.getAllUsers());
     }
 
     @Override
