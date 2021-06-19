@@ -1,4 +1,4 @@
-package pl.coderslab.utils;
+package pl.coderslab.controler;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;

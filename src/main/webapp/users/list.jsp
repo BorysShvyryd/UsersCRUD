@@ -1,4 +1,5 @@
 <%@ include file="/header.jsp" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%--            <!-- End of Topbar -->--%>
@@ -33,13 +34,15 @@
             <div class="table-responsive">
                 <table class="table">
                     <tr>
+                        <th>N</th>
                         <th>Id</th>
                         <th>Nazwa użytkownika</th>
                         <th>Email</th>
                         <th>Akcja</th>
                     </tr>
-                    <c:forEach items="${users}" var="user">
+                    <c:forEach items="${users}" var="user" varStatus="index">
                         <tr>
+                            <td>${index.count}</td>
                             <td>${user.id}</td>
                             <td>${user.userName}</td>
                             <td>${user.email}</td>

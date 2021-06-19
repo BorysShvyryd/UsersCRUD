@@ -1,4 +1,4 @@
-package pl.coderslab.classes;
+package pl.coderslab.controler;
 
 public class User {
     private int id;
